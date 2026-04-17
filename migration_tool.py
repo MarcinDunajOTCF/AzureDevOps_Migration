@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 from urllib.parse import quote, urlparse
 
@@ -41,6 +42,10 @@ def _build_repo_url(org_url: str, project_name: str, repo_name: str) -> str:
     return f"{org_url}/{quote(project_name)}/_git/{quote(repo_name)}"
 
 
+def _safe_temp_repo_name(repo_name: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]", "_", repo_name)
+
+
 def build_plan(source_org_url: str, source_project: str, target_org_url: str, target_project: str, repos: list[str]) -> str:
     lines = [
         "# Azure DevOps Migration Plan",
@@ -58,7 +63,7 @@ def build_plan(source_org_url: str, source_project: str, target_org_url: str, ta
         "## Suggested Commands",
         "```bash",
         f"az devops configure --defaults organization={target_org_url} project=\"{target_project}\"",
-        f"az devops project create --name \"{target_project}\" --organization {target_org_url}",
+        f"az devops project create --name \"{target_project}\" --organization \"{target_org_url}\"",
         "```",
         "",
     ]
@@ -74,15 +79,16 @@ def build_plan(source_org_url: str, source_project: str, target_org_url: str, ta
     else:
         lines.extend(["## Repository Mirroring Commands", ""])
         for repo in repos:
+            safe_repo = _safe_temp_repo_name(repo)
             source_url = _build_repo_url(source_org_url, source_project, repo)
             target_url = _build_repo_url(target_org_url, target_project, repo)
             lines.extend(
                 [
                     f"### {repo}",
                     "```bash",
-                    f"git clone --mirror \"{source_url}\" \"/tmp/{repo}.git\"",
-                    f"git -C \"/tmp/{repo}.git\" push --mirror \"{target_url}\"",
-                    f"rm -rf \"/tmp/{repo}.git\"",
+                    f"git clone --mirror \"{source_url}\" \"/tmp/{safe_repo}.git\"",
+                    f"git -C \"/tmp/{safe_repo}.git\" push --mirror \"{target_url}\"",
+                    f"rm -rf \"/tmp/{safe_repo}.git\"",
                     "```",
                     "",
                 ]

@@ -5,7 +5,7 @@ Minimal helper for planning Azure DevOps project migration between organizations
 ## Usage
 
 ```bash
-python3 /home/runner/work/AzureDevOps_Migration/AzureDevOps_Migration/migration_tool.py \
+python3 migration_tool.py \
   --source-org-url https://dev.azure.com/sourceOrg \
   --source-project SourceProject \
   --target-org-url https://dev.azure.com/targetOrg \
